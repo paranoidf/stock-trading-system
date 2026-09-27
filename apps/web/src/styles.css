@@ -28,6 +28,7 @@ label { display: block; margin: 12px 0; font-weight: 650; }
 .up { color: #70e0aa; }
 .down { color: #ff9a9a; }
 .connection-status { width: fit-content; padding: 6px 10px; border-radius: 999px; background: #12304a; }
+.user-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .metrics p { margin: 0; padding: 12px; border-radius: 9px; background: #10263a; }
 .metrics strong { display: block; margin-top: 4px; font-size: 1.2rem; }

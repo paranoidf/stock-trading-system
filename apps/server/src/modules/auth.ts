@@ -18,6 +18,7 @@ export class AuthService {
   private readonly usersByName = new Map<string, UserRecord>();
   private readonly usersById = new Map<string, UserRecord>();
   private readonly sessions = new Map<string, string>();
+  private readonly sessionDestroyedListeners = new Set<(token: string) => void>();
 
   register(usernameInput: unknown, passwordInput: unknown) {
     const username = this.validateUsername(usernameInput);
@@ -57,7 +58,13 @@ export class AuthService {
   }
 
   destroySession(token: string | undefined): void {
-    if (token) this.sessions.delete(token);
+    if (!token || !this.sessions.delete(token)) return;
+    for (const listener of this.sessionDestroyedListeners) listener(token);
+  }
+
+  subscribeSessionDestroyed(listener: (token: string) => void): () => void {
+    this.sessionDestroyedListeners.add(listener);
+    return () => this.sessionDestroyedListeners.delete(listener);
   }
 
   private validateUsername(input: unknown): string {

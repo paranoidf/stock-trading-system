@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SnapshotDto } from '@stock-trading/shared';
-import { createReconnectController, type ReconnectSocket } from './reconnect.js';
+import { calculateReconnectDelay, createReconnectController, type ReconnectSocket } from './reconnect.js';
 
 function snapshot(username: string): SnapshotDto {
   return {
@@ -26,18 +26,24 @@ describe('断线重连控制器', () => {
     const sockets: FakeSocket[] = [];
     const controller = createReconnectController({
       socketFactory: () => { const socket = new FakeSocket(); sockets.push(socket); return socket; },
-      loadSnapshot: async () => snapshot('alice'), applySnapshot: vi.fn(), applyEvent: vi.fn()
+      loadSnapshot: async () => snapshot('alice'), applySnapshot: vi.fn(), applyEvent: vi.fn(), random: () => 0.5
     });
     controller.start();
     expect(sockets).toHaveLength(1);
     sockets[0]!.emit('close');
     sockets[0]!.emit('close');
-    await vi.advanceTimersByTimeAsync(999);
+    await vi.advanceTimersByTimeAsync(499);
     expect(sockets).toHaveLength(1);
     await vi.advanceTimersByTimeAsync(1);
     expect(sockets).toHaveLength(2);
     controller.stop();
     vi.useRealTimers();
+  });
+
+  it('使用 500ms 起步、10s 上限和正负 10% 抖动', () => {
+    expect(calculateReconnectDelay(0, () => 0)).toBe(450);
+    expect(calculateReconnectDelay(0, () => 1)).toBe(550);
+    expect(calculateReconnectDelay(8, () => 1)).toBe(10_000);
   });
 
   it('以新世代快照为权威并在同步完成后回放缓冲事件', async () => {
@@ -86,6 +92,26 @@ describe('断线重连控制器', () => {
     await vi.runAllTimersAsync();
     expect(socket.close).toHaveBeenCalled();
     controller.stop();
+    vi.useRealTimers();
+  });
+
+  it('连接关闭后的会话探测为 401 时停止而不再创建连接', async () => {
+    vi.useFakeTimers();
+    const sockets: FakeSocket[] = [];
+    const onUnauthorized = vi.fn();
+    const controller = createReconnectController({
+      socketFactory: () => { const socket = new FakeSocket(); sockets.push(socket); return socket; },
+      loadSnapshot: async () => snapshot('alice'),
+      checkSession: async () => { throw Object.assign(new Error('unauthorized'), { status: 401 }); },
+      applySnapshot: vi.fn(), applyEvent: vi.fn(), onUnauthorized
+    });
+    controller.start();
+    sockets[0]!.emit('close');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+    await vi.runAllTimersAsync();
+    expect(sockets).toHaveLength(1);
     vi.useRealTimers();
   });
 });

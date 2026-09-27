@@ -59,4 +59,29 @@ describe('私有交易 WebSocket', () => {
     expect(buyerTrade).toMatchObject({ side: 'buy', quantity: 10, price: '100.00' });
     expect(JSON.stringify([...sellerEvents, ...buyerEvents])).not.toContain(observer.id);
   });
+
+  it('销毁会话后立即关闭该 token 已建立的连接', async () => {
+    const runtime = createApp();
+    const user = runtime.services.auth.register('logout_socket', 'password123');
+    runtime.services.ledger.createAccount(user.id);
+    const token = runtime.services.auth.createSession(user.id);
+    const server = createServer(runtime.app);
+    runtime.attachRealtime(server);
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    cleanups.push(async () => {
+      runtime.close();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    });
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('测试服务器未监听 TCP 端口');
+    const socket = new WebSocket(`ws://127.0.0.1:${address.port}/ws`, { headers: { Cookie: `session=${token}` } });
+    cleanups.push(() => socket.close());
+    await new Promise<void>((resolve, reject) => { socket.once('open', resolve); socket.once('error', reject); });
+    const closed = new Promise<boolean>((resolve) => {
+      socket.once('close', () => resolve(true));
+      setTimeout(() => resolve(false), 100);
+    });
+    runtime.services.auth.destroySession(token);
+    expect(await closed).toBe(true);
+  });
 });

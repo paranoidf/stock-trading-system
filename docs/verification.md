@@ -194,3 +194,26 @@
 - RED：文档检查器加入 `PROMPTS.md` 后，`npm run docs:check` 以 `ENOENT` 失败。
 - GREEN：从本任务真实输入整理 5 条记录后，`npm run docs:check` 通过，验证 8 个必需文件和 12 个命令入口；`git diff --check` 通过。
 - 结果：Prompt 记录包含场景、用户问题、AI 建议与真实人工调整，不含 Secrets、个人凭据或虚构确认；验证记录继续区分通过、失败和曾经的阻塞。
+
+## 2026-09-28：T26 独立代码审查与修复
+
+- 首轮审查：发现 4 个 Required 项——缺少 UI 退出及 token 级 WebSocket 撤销、重连参数偏离规格、实时 DTO 结构校验不足、WebSocket 握手 401 导致无限重连。
+- T26-R1 RED/GREEN：退出按钮不存在且销毁 session 后连接 100ms 内未关闭；修复后 App 2 个测试、WebSocket 私有测试 2 个测试通过，类型检查通过。
+- T26-R2 RED/GREEN：首次 500ms 重连和延迟计算测试失败；实现 500ms 起步、10s 上限、正负 10% 抖动后 4 个测试通过。
+- T26-R3 RED/GREEN：`market.updated` 的对象 data 被错误接受；加入四类 DTO 校验后实时服务 2 个测试通过。
+- T26-R4 RED/GREEN：关闭后的 401 探测未触发清理；加入 `GET /api/session` 探测后重连控制器 5 个测试通过。
+- 调试：完整回归首次被 `.mjs` 缺少 Node globals 的 lint 配置阻止；限定 `scripts/**/*.mjs` 的 Node 24 globals 后解决。
+- 复审门禁：`git diff --check`、`npm test`、`npm run build` 均通过；16 个单元测试文件 34 个测试、8 个集成测试文件 13 个测试通过。
+- 结论：没有 Critical 或未解决 Required 发现；详细证据见 `docs/code-review.md`。
+
+## 2026-09-28：T27 最终质量门禁
+
+- 首轮失败：47 个测试全部通过，但 branch 覆盖率为 78.65%，低于 80% 门槛。没有降低阈值或排除文件；补充开发/生产与 Secure Cookie 运行时配置分支测试后恢复。
+- 覆盖率复跑：25 个测试文件 49 个测试通过；语句 95.51%、分支 80.33%、函数 98.27%、行 99.45%。
+- 浏览器失败与根因：新增真实退出断言后页面显示 `Unexpected end of JSON input`；统一 API 客户端错误地对 `204 No Content` 调用 `response.json()`。新增 204 回归测试、最小修复后，原双用户撮合与退出场景通过。
+- 修复后完整门禁：`npm run lint`、`npm run typecheck`、`npm run test:coverage`、`npm run test:integration`、`npm run build`、`npm run test:production`、`npm run test:e2e` 全部通过。
+- 最终测试数量：覆盖率运行 26 个测试文件 50 个测试通过；集成测试 8 个文件 13 个测试通过；生产测试 1 个文件 2 个测试通过；Playwright 3 个场景通过，耗时 28.3 秒。
+- 最终覆盖率：语句 95.51%、分支 80.33%、函数 98.27%、行 99.45%。
+- 本地生产烟雾：端口 3100 的页面 200、健康 `ok`、注册 201、WebSocket `market.updated` 通过，随后终止进程。
+- 最终 Docker：重新构建镜像成功，容器烟雾验证页面、健康、注册和 WebSocket 通过；运行身份为 `uid=1000(node)`；`docker compose down` 成功。
+- 结果：T27 通过，没有待处理测试、构建、生产、Docker 或 Playwright 失败。

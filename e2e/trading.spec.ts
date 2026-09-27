@@ -50,6 +50,8 @@ test('双用户撮合：种子持仓卖出并由另一用户交叉买入', async
 
   await seller.screenshot({ path: 'output/playwright/seller-final.png', fullPage: true });
   await buyer.screenshot({ path: 'output/playwright/buyer-final.png', fullPage: true });
+  await seller.getByRole('button', { name: '退出' }).click();
+  await expect(seller.getByRole('heading', { name: '开始模拟交易' })).toBeVisible();
   await sellerContext.close();
   await buyerContext.close();
 });

@@ -11,12 +11,25 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'st
 interface ReconnectOptions {
   socketFactory: () => ReconnectSocket;
   loadSnapshot: () => Promise<SnapshotDto>;
+  checkSession?: () => Promise<unknown>;
   applySnapshot: (snapshot: SnapshotDto) => void;
   applyEvent: (event: RealtimeEvent) => void;
   onStatus?: (status: ConnectionStatus) => void;
   onUnauthorized?: () => void;
   baseDelayMs?: number;
   maxDelayMs?: number;
+  random?: () => number;
+}
+
+export function calculateReconnectDelay(
+  attempt: number,
+  random: () => number = Math.random,
+  baseDelayMs = 500,
+  maxDelayMs = 10_000
+): number {
+  const exponential = baseDelayMs * 2 ** attempt;
+  const jittered = Math.round(exponential * (0.9 + random() * 0.2));
+  return Math.min(jittered, maxDelayMs);
 }
 
 export function createReconnectController(options: ReconnectOptions) {
@@ -27,14 +40,20 @@ export function createReconnectController(options: ReconnectOptions) {
   let attempt = 0;
   let syncingGeneration: number | undefined;
   let buffered: RealtimeEvent[] = [];
-  const baseDelay = options.baseDelayMs ?? 1000;
-  const maxDelay = options.maxDelayMs ?? 30_000;
+  const baseDelay = options.baseDelayMs ?? 500;
+  const maxDelay = options.maxDelayMs ?? 10_000;
 
   const status = (value: ConnectionStatus) => options.onStatus?.(value);
+  const unauthorized = (error: unknown) => typeof error === 'object' && error !== null
+    && 'status' in error && error.status === 401;
+  const stopForUnauthorized = () => {
+    api.stop();
+    options.onUnauthorized?.();
+  };
   const scheduleReconnect = () => {
     if (stopped || timer) return;
     status('reconnecting');
-    const delay = Math.min(baseDelay * 2 ** attempt, maxDelay);
+    const delay = calculateReconnectDelay(attempt, options.random, baseDelay, maxDelay);
     attempt += 1;
     timer = setTimeout(() => {
       timer = undefined;
@@ -69,9 +88,8 @@ export function createReconnectController(options: ReconnectOptions) {
         status('connected');
       }).catch((error: unknown) => {
         if (stopped || currentGeneration !== generation) return;
-        if (typeof error === 'object' && error !== null && 'status' in error && error.status === 401) {
-          api.stop();
-          options.onUnauthorized?.();
+        if (unauthorized(error)) {
+          stopForUnauthorized();
           return;
         }
         generation += 1;
@@ -84,7 +102,18 @@ export function createReconnectController(options: ReconnectOptions) {
       generation += 1;
       syncingGeneration = undefined;
       buffered = [];
-      scheduleReconnect();
+      if (!options.checkSession) {
+        scheduleReconnect();
+        return;
+      }
+      const recoveryGeneration = generation;
+      void options.checkSession().then(() => {
+        if (!stopped && recoveryGeneration === generation) scheduleReconnect();
+      }).catch((error: unknown) => {
+        if (stopped || recoveryGeneration !== generation) return;
+        if (unauthorized(error)) stopForUnauthorized();
+        else scheduleReconnect();
+      });
     });
   };
 

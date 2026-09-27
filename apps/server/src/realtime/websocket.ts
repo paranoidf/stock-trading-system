@@ -15,27 +15,37 @@ function sessionToken(request: IncomingMessage): string | undefined {
 export function attachWebSocket(server: Server, auth: AuthService, market: MarketSimulator, trading: TradingService) {
   const sockets = new Set<WebSocket>();
   const userSockets = new Map<string, Set<WebSocket>>();
+  const tokenSockets = new Map<string, Set<WebSocket>>();
   const usersByRequest = new WeakMap<IncomingMessage, string>();
+  const tokensByRequest = new WeakMap<IncomingMessage, string>();
   const wss = new WebSocketServer({ noServer: true });
   const onUpgrade = (request: IncomingMessage, socket: import('node:stream').Duplex, head: Buffer) => {
     if (new URL(request.url ?? '/', 'http://localhost').pathname !== '/ws') return;
-    const user = auth.userForToken(sessionToken(request));
+    const token = sessionToken(request);
+    const user = auth.userForToken(token);
     if (!user) {
       socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
       socket.destroy();
       return;
     }
     usersByRequest.set(request, user.id);
+    tokensByRequest.set(request, token!);
     wss.handleUpgrade(request, socket, head, (client) => wss.emit('connection', client, request));
   };
   server.on('upgrade', onUpgrade);
   wss.on('connection', (socket, request) => {
     sockets.add(socket);
     const userId = usersByRequest.get(request);
+    const token = tokensByRequest.get(request);
     if (userId) {
       const channels = userSockets.get(userId) ?? new Set<WebSocket>();
       channels.add(socket);
       userSockets.set(userId, channels);
+    }
+    if (token) {
+      const channels = tokenSockets.get(token) ?? new Set<WebSocket>();
+      channels.add(socket);
+      tokenSockets.set(token, channels);
     }
     socket.once('close', () => {
       sockets.delete(socket);
@@ -43,7 +53,16 @@ export function attachWebSocket(server: Server, auth: AuthService, market: Marke
       const channels = userSockets.get(userId);
       channels?.delete(socket);
       if (channels?.size === 0) userSockets.delete(userId);
+      if (token) {
+        const tokenChannels = tokenSockets.get(token);
+        tokenChannels?.delete(socket);
+        if (tokenChannels?.size === 0) tokenSockets.delete(token);
+      }
     });
+  });
+  const unsubscribeSessionDestroyed = auth.subscribeSessionDestroyed((token) => {
+    for (const socket of tokenSockets.get(token) ?? []) socket.close(1008, '会话已退出');
+    tokenSockets.delete(token);
   });
   const unsubscribe = market.subscribe((quotes) => {
     const event: RealtimeEvent = { type: 'market.updated', version: 1, data: quotes };
@@ -73,10 +92,12 @@ export function attachWebSocket(server: Server, auth: AuthService, market: Marke
   return () => {
     unsubscribe();
     unsubscribeTrading();
+    unsubscribeSessionDestroyed();
     server.off('upgrade', onUpgrade);
     for (const socket of sockets) socket.terminate();
     sockets.clear();
     userSockets.clear();
+    tokenSockets.clear();
     wss.close();
   };
 }

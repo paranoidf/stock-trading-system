@@ -12,6 +12,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     credentials: 'same-origin',
     headers: { 'content-type': 'application/json', ...init.headers }
   });
+  if (response.status === 204) return undefined as T;
   const body = await response.json() as T | ApiErrorBody;
   if (!response.ok) {
     const error = (body as ApiErrorBody).error;

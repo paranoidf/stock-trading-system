@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { ApiError, fetchSnapshot } from './services/api.js';
+import { apiRequest, ApiError, fetchSnapshot } from './services/api.js';
 import { sessionStore } from './stores/session.js';
 import AuthPanel from './components/AuthPanel.vue';
 import MarketBoard from './components/MarketBoard.vue';
@@ -19,6 +19,11 @@ const connectionLabel = computed(() => ({
 })[connectionStatus.value]);
 let realtime: ReturnType<typeof createReconnectController> | undefined;
 
+function stopRealtime() {
+  realtime?.stop();
+  realtime = undefined;
+}
+
 function connectRealtime() {
   if (realtime) return;
   realtime = createReconnectController({
@@ -27,12 +32,16 @@ function connectRealtime() {
       return new WebSocket(`${protocol}//${window.location.host}/ws`);
     },
     loadSnapshot: fetchSnapshot,
+    checkSession: () => apiRequest('/api/session'),
     applySnapshot: sessionStore.applySnapshot,
     applyEvent: (event) => {
       if (event.type === 'market.updated') sessionStore.updateMarket(event.data);
       else void tradingStore.refresh();
     },
-    onUnauthorized: sessionStore.clear,
+    onUnauthorized: () => {
+      sessionStore.clear();
+      realtime = undefined;
+    },
     onStatus: (status) => { connectionStatus.value = status; }
   });
   realtime.start();
@@ -50,6 +59,17 @@ async function reloadAfterAuthentication() {
   connectRealtime();
 }
 
+async function logout() {
+  try {
+    await apiRequest('/api/auth/logout', { method: 'POST' });
+    stopRealtime();
+    sessionStore.clear();
+    message.value = '';
+  } catch (error) {
+    message.value = error instanceof Error ? error.message : '退出失败';
+  }
+}
+
 onMounted(async () => {
   try {
     await loadSnapshot();
@@ -61,7 +81,7 @@ onMounted(async () => {
   }
 });
 
-onBeforeUnmount(() => realtime?.stop());
+onBeforeUnmount(stopRealtime);
 </script>
 
 <template>
@@ -71,7 +91,10 @@ onBeforeUnmount(() => realtime?.stop());
     <p v-else-if="message" role="alert">{{ message }}</p>
     <AuthPanel v-else-if="!sessionStore.state.user" @authenticated="reloadAfterAuthentication" />
     <template v-else>
-      <p>欢迎，{{ sessionStore.state.user.username }}</p>
+      <div class="user-bar">
+        <p>欢迎，{{ sessionStore.state.user.username }}</p>
+        <button type="button" data-action="logout" @click="logout">退出</button>
+      </div>
       <p class="connection-status" aria-live="polite">实时连接：{{ connectionLabel }}</p>
       <MarketBoard :quotes="sessionStore.state.market" />
       <div class="workspace-grid">
