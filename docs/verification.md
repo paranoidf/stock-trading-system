@@ -217,3 +217,14 @@
 - 本地生产烟雾：端口 3100 的页面 200、健康 `ok`、注册 201、WebSocket `market.updated` 通过，随后终止进程。
 - 最终 Docker：重新构建镜像成功，容器烟雾验证页面、健康、注册和 WebSocket 通过；运行身份为 `uid=1000(node)`；`docker compose down` 成功。
 - 结果：T27 通过，没有待处理测试、构建、生产、Docker 或 Playwright 失败。
+
+## 2026-09-28：T28 GitHub 发布准备与安全复核
+
+- 工作树基线：`git status --short --branch` 在开始 T28 时仅显示 `## master`，没有未提交修改。
+- 远程：`origin` 的 fetch/push 地址均为 `https://github.com/paranoidf/stock-trading-system.git`。
+- 远程同步：沙箱内首次 `git fetch origin --prune` 因 `.git/FETCH_HEAD` 写权限被拒绝；在获批环境重跑成功。`git remote show origin` 显示 `HEAD branch: (unknown)`，`git ls-remote --heads origin` 无输出，确认远程仍无分支或提交，没有历史冲突。
+- 文件范围：`git ls-files` 只包含产品、测试、规格、文档和运行配置；没有被跟踪的 `.env`、私钥、证书、缓存、覆盖率、构建或 Playwright 输出。
+- 敏感信息扫描：对 Git 跟踪文件执行私钥、GitHub token 和 AWS access key 常见模式扫描，无匹配结果。
+- 忽略规则：确认 `node_modules`、`dist`、`coverage`、`.env`、日志和 Playwright 产物均被排除。
+- 发布材料：新增 `docs/release-checklist.md`，建立 `AC-01` 至 `AC-15` 的证据追踪和授权后操作清单；文档检查器将该文件纳入必需交付物。
+- 权限边界：未执行 push、发布或部署，未修改仓库可见性、Secrets、Actions 或分支保护；T29 保持未执行并等待单独授权。

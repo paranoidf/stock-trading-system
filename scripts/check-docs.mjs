@@ -2,7 +2,7 @@ import { access, readFile } from 'node:fs/promises';
 
 const requiredFiles = [
   'README.md', 'SPEC.md', 'CAPABILITY_MAP.md', 'PROMPTS.md', 'tasks/plan.md', 'tasks/todo.md',
-  'docs/architecture-decisions.md', 'docs/verification.md'
+  'docs/architecture-decisions.md', 'docs/verification.md', 'docs/release-checklist.md'
 ];
 await Promise.all(requiredFiles.map((file) => access(file)));
 
