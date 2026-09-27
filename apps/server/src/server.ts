@@ -4,6 +4,7 @@ import { createApp } from './app.js';
 const port = Number(process.env.PORT ?? 3000);
 const runtime = createApp();
 const server = createServer(runtime.app);
+runtime.attachRealtime(server);
 
 server.listen(port, () => {
   console.log(`股票模拟交易系统运行于 http://localhost:${port}`);

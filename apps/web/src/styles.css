@@ -1,0 +1,45 @@
+:root {
+  font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+  color: #e7eef7;
+  background: #07111f;
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: radial-gradient(circle at 80% 0%, #123252, #07111f 48%); }
+button, input, select { font: inherit; }
+button, input, select { min-height: 42px; border-radius: 8px; border: 1px solid #36506b; }
+input, select { width: 100%; margin-top: 6px; padding: 8px 10px; color: #eef6ff; background: #0b1a2a; }
+button { padding: 8px 16px; color: #06111e; background: #66d9c6; border-color: transparent; font-weight: 700; cursor: pointer; }
+button:disabled { cursor: wait; opacity: .6; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #f7c873; outline-offset: 2px; }
+main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+h1 { margin: 0 0 18px; letter-spacing: -.03em; }
+h2 { margin-top: 0; font-size: 1.1rem; }
+.panel, .auth-card { margin: 16px 0; padding: 20px; border: 1px solid #1f3d58; border-radius: 14px; background: rgb(9 25 41 / 92%); box-shadow: 0 16px 40px rgb(0 0 0 / 20%); }
+.auth-card { max-width: 440px; }
+label { display: block; margin: 12px 0; font-weight: 650; }
+.actions { display: flex; gap: 10px; margin-top: 18px; }
+.workspace-grid { display: grid; grid-template-columns: minmax(260px, .7fr) minmax(0, 1.3fr); gap: 16px; align-items: start; }
+.workspace-grid .panel { margin: 0; }
+.quote-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.quote-card { padding: 14px; border-radius: 10px; background: #10263a; }
+.quote-card div { display: flex; justify-content: space-between; gap: 8px; }
+.price { font-size: 1.5rem; margin: 12px 0 4px; }
+.up { color: #70e0aa; }
+.down { color: #ff9a9a; }
+.connection-status { width: fit-content; padding: 6px 10px; border-radius: 999px; background: #12304a; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.metrics p { margin: 0; padding: 12px; border-radius: 9px; background: #10263a; }
+.metrics strong { display: block; margin-top: 4px; font-size: 1.2rem; }
+.table-wrap { max-width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+th, td { padding: 10px; text-align: left; border-bottom: 1px solid #203b53; }
+th { color: #a9bed0; font-size: .85rem; }
+[role="alert"] { color: #ffb2b2; }
+@media (max-width: 720px) {
+  main { padding: 14px; }
+  .workspace-grid, .quote-grid, .metrics { grid-template-columns: 1fr; }
+  .panel, .auth-card { padding: 15px; }
+  .actions { flex-wrap: wrap; }
+  .actions button { flex: 1 1 120px; }
+}

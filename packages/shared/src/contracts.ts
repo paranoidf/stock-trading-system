@@ -26,7 +26,7 @@ export interface PortfolioDto {
   availableCash: string;
   reservedCash: string;
   totalAssets: string;
-  positions: PositionDto[];
+  positions: readonly PositionDto[];
 }
 
 export interface OrderDto {
@@ -51,14 +51,14 @@ export interface TradeDto {
 
 export interface SnapshotDto {
   user: { id: string; username: string };
-  market: StockQuoteDto[];
-  orders: OrderDto[];
+  market: readonly StockQuoteDto[];
+  orders: readonly OrderDto[];
   portfolio: PortfolioDto;
-  trades: TradeDto[];
+  trades: readonly TradeDto[];
 }
 
 export type RealtimeEvent =
-  | { type: 'market.updated'; version: 1; data: StockQuoteDto[] }
+  | { type: 'market.updated'; version: 1; data: readonly StockQuoteDto[] }
   | { type: 'order.updated'; version: 1; data: OrderDto }
   | { type: 'portfolio.updated'; version: 1; data: PortfolioDto }
   | { type: 'trade.created'; version: 1; data: TradeDto };
