@@ -14,7 +14,7 @@
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
-    "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
+    "test:coverage": "vitest run --coverage --config vitest.coverage.config.ts",
     "test": "npm run lint && npm run typecheck && npm run test:unit && npm run test:integration",
     "build": "npm run build --workspaces --if-present",
     "start": "npm run start --workspace @stock-trading/server",
