@@ -10,8 +10,10 @@ import { createAuthRouter } from './routes/auth.js';
 import { createTradingRouter } from './routes/trading.js';
 import { attachWebSocket } from './realtime/websocket.js';
 import type { Server } from 'node:http';
+import type { AppOptions } from './config.js';
+import { serveWebApplication } from './static.js';
 
-export function createApp() {
+export function createApp(options: AppOptions = {}) {
   const app = express();
   const lifecycle = createLifecycle();
   const ledger = new AccountLedger();
@@ -28,9 +30,10 @@ export function createApp() {
   app.get('/api/health', (_request, response) => {
     response.json({ status: 'ok' });
   });
-  app.use(createAuthRouter(auth, ledger));
+  app.use(createAuthRouter(auth, ledger, options.secureCookies));
   app.use(createMarketRouter(market));
   app.use(createTradingRouter(auth, trading));
+  if (options.staticDirectory) serveWebApplication(app, options.staticDirectory);
 
   let realtimeAttached = false;
   const attachRealtime = (server: Server) => {

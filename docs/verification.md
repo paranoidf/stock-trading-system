@@ -143,3 +143,36 @@
 - GREEN：App 聚焦测试 1 个通过；连接状态、委托空态、成交空态和表单标题关联均满足断言。
 - 回归：`npm test` 通过；16 个单元测试文件 31 个测试、7 个集成测试文件 10 个测试。
 - 结果：认证表单支持 Enter 登录，交易表单具备可访问标题，焦点可见；连接状态中文化，表格可横向滚动，720px 以下布局收敛为单列并适配 390px 视口。
+
+## 2026-09-28：T20 生产构建与单进程运行
+
+- RED：生产集成测试首先以 404 暴露 SPA 回退缺失，并确认 `secureCookies: true` 未生效。
+- 调试一：初次 `npm start` 从 workspace 错误解析 `dist` 路径，报告 `MODULE_NOT_FOUND`；将入口改为相对 `apps/server` 的 `../../dist/...`。
+- 调试二：再次启动时共享包仍指向 TypeScript 源入口，Node 无法解析源码中的 `.js` 相对导入；为共享包增加开发/类型/生产条件导出，并让构建与开发先生成共享运行时。
+- GREEN：生产路由测试 2 个通过，`npm run build` 成功，Vite 生成 75.04 kB JavaScript 与 2.19 kB CSS，`npm run test:production` 通过。
+- 真实运行：以 `NODE_ENV=production PORT=3100 npm start` 启动成功；`GET /api/health` 返回 `ok`，`GET /` 返回 200 且包含产品标题，随后人工终止本地进程。
+- 结果：单一生产进程提供 SPA、REST 和 WebSocket；未知 `/api` 不回退到 SPA，Cookie 仅在明确配置时启用 `Secure`。
+
+## 2026-09-28：T22 双浏览器上下文撮合验收
+
+- 首次环境失败：应用成功构建和启动，但 Chromium 可执行文件不存在，Playwright 在启动浏览器前失败；安装锁定版本 Chromium 153、Headless Shell 与 FFmpeg 后继续。
+- 首次场景失败：可访问选择器 `getByLabel('限价')` 同时命中 form 与 input；收紧为 exact 后保留全部业务断言。
+- GREEN：`npm run test:e2e -- --grep "双用户撮合"` 通过，1 个测试耗时 27.0 秒。
+- 真实浏览器结果：两个隔离上下文分别注册；双方初始现金为 100 万且 AAPL 为 1,000 股；卖方以 100.00 卖出 10 股，买方以 101.00 交叉买入，成交价 100.00；最终现金分别为 1,001,000.00 与 999,000.00，AAPL 分别为 990 与 1,010 股。
+- 证据：`output/playwright/seller-final.png`、`output/playwright/buyer-final.png`；失败运行的 trace 和截图保存在忽略提交的 `output/playwright/test-results`。
+
+## 2026-09-28：T21 Docker 与 Compose
+
+- RED：`docker compose config` 首次报告未找到配置文件。
+- 配置修复：增加非 root、多阶段 `Dockerfile`、Compose 健康检查和 `.dockerignore`；中文仓库目录使 Compose 自动项目名为空，显式设置 `name: stock-trading-system` 后 `docker compose config` 通过。
+- 宿主阻塞：`docker compose up --build -d` 无法连接 `dockerDesktopLinuxEngine`。启动 Docker Desktop 后，`docker info` 仍持续阻塞；宿主日志显示后端在初始化 Inference manager 时因本地 `dockerInference` socket 无法访问而崩溃，随后关闭全部引擎。
+- 当前状态：阻塞。尚未构建镜像、启动容器或声称容器健康；恢复 Docker Desktop 引擎后必须重新执行 `docker compose up --build -d && docker compose ps`、HTTP/WebSocket 烟雾与 `docker compose down`。
+
+## 2026-09-28：T23 重连、刷新与窄屏浏览器验收
+
+- RED：恢复场景的“买入”选择器同时命中委托行和成交行；窄屏场景把规格要求的首屏未登录 401 探测误记为意外 console error。
+- 修正：将订单断言限定在“我的委托”区域，并只豁免这条预期 401；页面异常、其他 console error 和 5xx 仍会使验收失败。
+- GREEN：`npm run test:e2e -- --grep "恢复|窄屏"` 两个场景通过，耗时 27.1 秒。
+- 完整回归：`npm run test:e2e` 三个场景全部通过，耗时 27.4 秒；随后 `npm run build` 通过。
+- 真实浏览器结果：卖方离线期间买方完成成交，卖方恢复网络后通过权威快照看到已成交订单和成交记录；刷新后 Cookie 会话与状态保持；390px 页面无页面级横向溢出。
+- 证据：`output/playwright/reconnect-final.png`、`output/playwright/mobile-390.png`。

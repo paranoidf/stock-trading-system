@@ -1,8 +1,9 @@
 import { createServer } from 'node:http';
 import { createApp } from './app.js';
+import { runtimeOptions } from './config.js';
 
 const port = Number(process.env.PORT ?? 3000);
-const runtime = createApp();
+const runtime = createApp(runtimeOptions());
 const server = createServer(runtime.app);
 runtime.attachRealtime(server);
 

@@ -10,10 +10,10 @@ export function sessionToken(request: Request): string | undefined {
   return cookie?.slice(COOKIE.length + 1);
 }
 
-export function createAuthRouter(auth: AuthService, ledger: AccountLedger) {
+export function createAuthRouter(auth: AuthService, ledger: AccountLedger, secureCookies = false) {
   const router = Router();
   const setSession = (response: Response, token: string) => {
-    response.cookie(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: process.env.COOKIE_SECURE === 'true', path: '/' });
+    response.cookie(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: secureCookies, path: '/' });
   };
   const portfolio = (userId: string) => {
     const account = ledger.getAccount(userId);

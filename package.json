@@ -6,7 +6,7 @@
   "workspaces": ["apps/*", "packages/*"],
   "engines": { "node": ">=24.0.0", "npm": ">=11.0.0" },
   "scripts": {
-    "dev": "run-p dev:server dev:web",
+    "dev": "npm run build --workspace @stock-trading/shared && run-p dev:server dev:web",
     "dev:server": "npm run dev --workspace @stock-trading/server",
     "dev:web": "npm run dev --workspace @stock-trading/web",
     "lint": "eslint .",
@@ -16,7 +16,7 @@
     "test:e2e": "playwright test",
     "test:coverage": "vitest run --coverage --config vitest.coverage.config.ts",
     "test": "npm run lint && npm run typecheck && npm run test:unit && npm run test:integration",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace @stock-trading/shared && npm run build --workspace @stock-trading/server && npm run build --workspace @stock-trading/web",
     "start": "npm run start --workspace @stock-trading/server",
     "test:production": "vitest run --config vitest.production.config.ts",
     "docs:check": "node scripts/check-docs.mjs"
