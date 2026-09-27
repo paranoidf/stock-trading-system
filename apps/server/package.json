@@ -1,0 +1,24 @@
+{
+  "name": "@stock-trading/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/apps/server/src/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@stock-trading/shared": "*",
+    "express": "5.2.1",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "latest",
+    "@types/supertest": "latest",
+    "@types/ws": "latest",
+    "supertest": "latest",
+    "tsx": "latest"
+  }
+}

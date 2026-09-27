@@ -1,0 +1,35 @@
+{
+  "name": "stock-trading-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": ">=24.0.0", "npm": ">=11.0.0" },
+  "scripts": {
+    "dev": "run-p dev:server dev:web",
+    "dev:server": "npm run dev --workspace @stock-trading/server",
+    "dev:web": "npm run dev --workspace @stock-trading/web",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
+    "test": "npm run lint && npm run typecheck && npm run test:unit && npm run test:integration",
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspace @stock-trading/server",
+    "test:production": "vitest run --config vitest.production.config.ts",
+    "docs:check": "node scripts/check-docs.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@playwright/test": "1.63.0",
+    "@types/node": "latest",
+    "@vitest/coverage-v8": "5.0.2",
+    "eslint": "latest",
+    "npm-run-all2": "8.0.4",
+    "typescript": "6.0.3",
+    "typescript-eslint": "latest",
+    "vitest": "5.0.2"
+  }
+}
