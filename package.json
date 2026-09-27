@@ -19,6 +19,7 @@
     "build": "npm run build --workspace @stock-trading/shared && npm run build --workspace @stock-trading/server && npm run build --workspace @stock-trading/web",
     "start": "npm run start --workspace @stock-trading/server",
     "test:production": "vitest run --config vitest.production.config.ts",
+    "test:container-smoke": "node scripts/container-smoke.mjs",
     "docs:check": "node scripts/check-docs.mjs"
   },
   "devDependencies": {

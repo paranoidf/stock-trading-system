@@ -166,7 +166,12 @@
 - RED：`docker compose config` 首次报告未找到配置文件。
 - 配置修复：增加非 root、多阶段 `Dockerfile`、Compose 健康检查和 `.dockerignore`；中文仓库目录使 Compose 自动项目名为空，显式设置 `name: stock-trading-system` 后 `docker compose config` 通过。
 - 宿主阻塞：`docker compose up --build -d` 无法连接 `dockerDesktopLinuxEngine`。启动 Docker Desktop 后，`docker info` 仍持续阻塞；宿主日志显示后端在初始化 Inference manager 时因本地 `dockerInference` socket 无法访问而崩溃，随后关闭全部引擎。
-- 当前状态：阻塞。尚未构建镜像、启动容器或声称容器健康；恢复 Docker Desktop 引擎后必须重新执行 `docker compose up --build -d && docker compose ps`、HTTP/WebSocket 烟雾与 `docker compose down`。
+- 恢复：用户重建 Docker 临时运行目录并重新启动 Docker Desktop 后，`docker info` 返回完整 Server 信息，Docker Desktop 29.3.1 与 WSL2 引擎恢复。
+- GREEN：`docker compose up --build -d` 成功；镜像内 `npm ci` 审计为 0 个漏洞，三 workspace 构建通过，容器状态为 `healthy`。
+- 容器烟雾：`npm run test:container-smoke` 实际验证页面 200、健康端点 `ok`、注册 201 和版本化 `market.updated` WebSocket 事件。
+- 非 root：`docker compose exec -T app id` 返回 `uid=1000(node) gid=1000(node)`。
+- 清理：`docker compose down` 成功移除容器和网络，`docker compose ps` 返回空列表。
+- 结果：通过。Docker 使用与本地生产一致的构建产物、入口、端口与健康检查。
 
 ## 2026-09-28：T23 重连、刷新与窄屏浏览器验收
 
@@ -176,3 +181,16 @@
 - 完整回归：`npm run test:e2e` 三个场景全部通过，耗时 27.4 秒；随后 `npm run build` 通过。
 - 真实浏览器结果：卖方离线期间买方完成成交，卖方恢复网络后通过权威快照看到已成交订单和成交记录；刷新后 Cookie 会话与状态保持；390px 页面无页面级横向溢出。
 - 证据：`output/playwright/reconnect-final.png`、`output/playwright/mobile-390.png`。
+
+## 2026-09-28：T24 README 与架构决策
+
+- RED：`npm run docs:check` 首次失败，报告 `scripts/check-docs.mjs` 不存在。
+- 调试：检查器随后发现 README 漏列 `npm run test:production`，以及内存限制说明未使用约定短语；补齐命令与“进程重启后”限制后复跑。
+- GREEN：`npm run docs:check` 通过，验证 7 个必需文件和 12 个命令入口；`git diff --check` 通过，仅有 Windows 行尾转换提示。
+- 结果：README 覆盖开发、生产、Docker、测试、交易规则、故障排查和已知限制；4 条架构决策均与实际实现一致。
+
+## 2026-09-28：T25 Prompt 与验证记录
+
+- RED：文档检查器加入 `PROMPTS.md` 后，`npm run docs:check` 以 `ENOENT` 失败。
+- GREEN：从本任务真实输入整理 5 条记录后，`npm run docs:check` 通过，验证 8 个必需文件和 12 个命令入口；`git diff --check` 通过。
+- 结果：Prompt 记录包含场景、用户问题、AI 建议与真实人工调整，不含 Secrets、个人凭据或虚构确认；验证记录继续区分通过、失败和曾经的阻塞。
