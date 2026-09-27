@@ -2,9 +2,9 @@
 
 ## 当前结论
 
-截至 2026-09-28，本地实现、独立代码审查、最终质量门禁和发布前安全复核均已完成。当前分支为 `master`，`origin` 指向 `https://github.com/paranoidf/stock-trading-system.git`。远程仓库尚无 `HEAD` 或分支，因此不存在需要合并的远程提交，也不存在本地与远程历史冲突。
+截至 2026-09-28，本地实现、独立代码审查、最终质量门禁、发布前安全复核和 GitHub 发布均已完成。当前分支为 `master`，`origin` 指向 `https://github.com/paranoidf/stock-trading-system.git`。
 
-本文件只记录发布准备状态。尚未执行 `git push`，未创建公开链接，也未修改仓库可见性、Secrets、Actions 或分支保护。GitHub 发布必须等待用户单独明确授权。
+用户明确授权后，已使用普通 `git push -u origin master` 创建远程 `master` 分支。发布前远程没有 `HEAD`、分支或提交，未发生历史覆盖；没有创建 GitHub Release、部署应用或修改仓库可见性、Secrets、Actions 和分支保护。
 
 ## 发布内容
 
@@ -31,7 +31,7 @@
 | `AC-12` | 最终 lint、类型、覆盖率、集成、构建和 Playwright 门禁；验证记录 T27 | 已验证 |
 | `AC-13` | `README.md` 与 `npm run docs:check`；验证记录 T24 | 已验证 |
 | `AC-14` | `PROMPTS.md` 与文档检查；验证记录 T25 | 已验证 |
-| `AC-15` | 本清单、Git 状态和远程核查；发布动作 T29 保持未执行 | 边界已验证，等待授权 |
+| `AC-15` | 本清单、Git 状态、远程 SHA 与公开网页核查 | 已验证 |
 
 ## 质量门禁摘要
 
@@ -52,11 +52,13 @@
 - `git fetch origin --prune` 已成功执行；`git remote show origin` 显示远程 `HEAD branch: (unknown)`，`git ls-remote --heads origin` 无输出，确认远程尚无分支。
 - 没有执行强推、历史重写、远程分支删除或 GitHub 设置修改。
 
-## 获得发布授权后的操作
+## 发布结果
 
-1. 再次运行 `git fetch origin --prune`、`git status --short --branch` 和 `git ls-remote --heads origin`，确认外部状态未变化。
-2. 确认最终提交 SHA 和获批分支；远程仍为空时，使用普通 `git push -u origin master`。
-3. 核对远程分支 SHA 与本地一致，并验证公开仓库链接可访问。
-4. 记录真实发布命令、结果和链接；不得强推或修改任何仓库设置。
+- 发布命令：`git push -u origin master`。
+- 首次发布提交：`0204778829348ec8e433e9d46df2b482a9d16781`。
+- 远程分支：`origin/master`。
+- 远程核验：`git ls-remote --heads origin master` 返回与本地一致的 SHA。
+- 网页核验：`https://github.com/paranoidf/stock-trading-system` 返回 HTTP 200。
+- 发布后仅允许再以普通 fast-forward push 同步本清单和 T29 完成记录。
 
-若授权前远程出现新提交或分支，应停止发布并重新检查历史关系，不得直接覆盖。
+没有使用 force push、删除远程内容、重写历史、创建 GitHub Release 或部署应用。

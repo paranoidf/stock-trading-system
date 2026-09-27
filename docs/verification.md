@@ -228,3 +228,13 @@
 - 忽略规则：确认 `node_modules`、`dist`、`coverage`、`.env`、日志和 Playwright 产物均被排除。
 - 发布材料：新增 `docs/release-checklist.md`，建立 `AC-01` 至 `AC-15` 的证据追踪和授权后操作清单；文档检查器将该文件纳入必需交付物。
 - 权限边界：未执行 push、发布或部署，未修改仓库可见性、Secrets、Actions 或分支保护；T29 保持未执行并等待单独授权。
+
+## 2026-09-28：T29 GitHub 发布
+
+- 授权：用户明确授权将当前已验证项目发布到 `https://github.com/paranoidf/stock-trading-system.git`。
+- 发布前复核：工作树干净，分支为 `master`，`origin` 地址正确；`git fetch origin --prune` 成功，远程仍无 `HEAD` 或分支，没有意外提交或历史冲突。
+- 发布命令：`git push -u origin master`，以普通 push 创建远程 `master` 分支，未使用 force push。
+- 首次发布 SHA：本地和远程均为 `0204778829348ec8e433e9d46df2b482a9d16781`。
+- 网页验证：公开仓库地址返回 HTTP 200。
+- 边界：未删除远程内容、改写历史、创建 GitHub Release、部署应用或修改仓库设置。
+- 后续：T29 完成记录作为最终本地提交，以普通 fast-forward push 同步后再次核对最终远程 SHA。
